@@ -1,33 +1,34 @@
-use std::convert::TryInto;
-use std::time::Duration;
+//use std::convert::TryInto;
+//use std::time::Duration;
 
 use fastly::http::{Method, StatusCode};
-use fastly::{mime, panic_with_status, Error, Request, Response, Body};
-use fastly_kv_preview::local_kv::{Key, LocalStore};
-use fastly_kv_preview::object_store::ObjectStore;
+use fastly::{
+    mime,
+    panic_with_status,
+    KVStore,
+    Body, Request, Response, Error};
+
+//use fastly::cache::simple::{get_or_set_with, CacheEntry};
+//use fastly::kv_store;
 use sha2::{Digest, Sha256};
 
 #[fastly::main]
 fn main(mut req: Request) -> Result<Response, Error> {
-    //Object store name must be defined in advance via API
-    //Note that due to a regression, we're currently using the LINK name,
-    //not the OBJECT STORE name, as of 2022-02-02.
-    let object_store_name = "demo_object_store";
+    //KV store name must be defined in advance via API
+    let kv_store_name = "demo_kv_store";
+    
     // For debugging
     let cache_server_host = std::env::var("FASTLY_HOSTNAME").unwrap_or_else(|_| String::new());
 
-    let path_re = regex::Regex::new(r#"^/(?P<action>local_kv|object_store)/(?P<key>[[:alnum:]]+)$"#).unwrap();
-    
+    //let path_re = regex::Regex::new(r#"^/(?P<action>simple_cache|kv_store)/(?P<key>[[:alnum:]]+)$"#).unwrap();
+    let path_re = regex::Regex::new(r#"^/(?P<action>kv_store)/(?P<key>[[:alnum:]]+)$"#).unwrap();
+
     match path_re.captures(req.get_path()) {
         Some(caps) => {
             match caps.name("action").unwrap().as_str() {
-                "local_kv" => {                    
-                    // Open the store
+                /*"simple_cache" => {                    
                     eprintln!("Fastly host: {}", cache_server_host);
-                    let mut local_store = LocalStore::open().unwrap_or_else(|_| {
-                        panic_with_status!(501, "cached_kvstore API not available on this host");
-                    });
-                    let key: Key = match caps.name("key") {
+                    let key: CacheKey = match caps.name("key") {
                         Some(urlkey) => {
                             let key = urlkey.as_str();
                             eprintln!("Key: {}", key);
@@ -60,27 +61,35 @@ fn main(mut req: Request) -> Result<Response, Error> {
                         },
                         _ => Ok(Response::from_status(StatusCode::METHOD_NOT_ALLOWED)),
                     }
-                },
-                "object_store" => {
-                    // Use Global Object Store
+                },*/
+                "kv_store" => {
+                    /*
+                    Use the KV Store when any of these conditions are true:
+                     * you need the data to be replicated globally
+                     * you need to be able to write keys from your Compute application
+                     * you need the data to be durable.
+                    */
                     eprintln!("Fastly host: {}", cache_server_host);
-                    let mut object_store = match ObjectStore::open(object_store_name).unwrap_or_else(|_| {
-                        panic_with_status!(501, "cached_object_store API not available on this host");
-                    }) {
-                        // open an existing object store
+                    eprintln!("Opening KV Store {}", kv_store_name);
+                    // open a KV store
+                    let mut kv_store = match KVStore::open(kv_store_name).unwrap_or_else(|_| {
+                        panic_with_status!(501, "kv_store API error");
+                    }) {                        
                         Some(store) => store,
                         // ...or panic if it doesn't exist
-                        None => panic_with_status!(501, "Store {} not found!", object_store_name),
+                        None => panic_with_status!(501, "Store {} not found!", kv_store_name),
+                        //None => Ok(Response::with_body_text_plain("Configured KV Store {} not found", kv_store_name))
                     };
+                    //let mut kv_store = KVStore::open("demo_kv_store")?.unwrap();
                     let key = caps.name("key").unwrap().as_str().to_owned();
                     eprintln!("Key: {}", key);
                     match req.get_method() {
-                        &Method::GET => match object_store.lookup(&key)? {
+                        &Method::GET => match kv_store.lookup(&key)? {
                             Some(value) => Ok(Response::from_body(value).with_content_type(mime::TEXT_PLAIN_UTF_8)),
                             None => Ok(Response::from_status(StatusCode::NOT_FOUND)),
                         },
                         &Method::POST => {
-                            object_store.insert(&key, req.take_body())?;
+                            kv_store.insert(&key, req.take_body())?;
                             Ok(Response::from_status(StatusCode::CREATED))
                         },
                         _ => Ok(Response::from_status(StatusCode::METHOD_NOT_ALLOWED)),
@@ -93,7 +102,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
         None => {
             eprintln!("Fastly host: {}", cache_server_host);
             Ok(Response::from_status(StatusCode::NOT_FOUND)
-                .with_body_text_plain("Invlaid URL\n"))
+                .with_body_text_plain("Invalid URL\n"))
         },
     }
 }

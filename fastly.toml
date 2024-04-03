@@ -1,0 +1,9 @@
+# This file describes a Fastly Compute@Edge package. To learn more visit:
+# https://developer.fastly.com/reference/fastly-toml/
+
+authors = ["kphillips+ecp@fastly.com"]
+description = "Demo service for key value store"
+language = "rust"
+manifest_version = 2
+name = "kv-demo"
+service_id = "5e2i5HuZ7ulo4BmSuweOT7"
