@@ -1,11 +1,10 @@
-<<<<<<< HEAD
-# Compute@Edge KV Store Demo
+# Fastly Compute KV Store Demo
 
 [![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/deploy)
 
 Try out new state features for the Fastly Compute@Edge environment with this basic starter that demonstrates routing, as well as reading and writing KV Store data.
 
-**For more details about starter kits for Compute@Edge, see the [Fastly Developer Hub](https://developer.fastly.com/solutions/starters/)**.
+**For more details about starter kits for Compute, see the [Fastly Developer Hub](https://developer.fastly.com/solutions/starters/)**.
 
 ## Features
 
@@ -17,7 +16,7 @@ Try out new state features for the Fastly Compute@Edge environment with this bas
 
 This starter is intentionally lightweight, and requires no dependencies aside from the [`fastly`](https://docs.rs/fastly) crate. It will help you understand the basics of processing requests at the edge using Fastly. This starter includes implementations of common patterns explained in our [using Compute@Edge](https://developer.fastly.com/learning/compute/rust/) and [VCL migration](https://developer.fastly.com/learning/compute/migrate/) guides.
 
-The starter doesn't require the use of any backends. Once deployed, you will have a Fastly service running on Compute@Edge that can generate synthetic responses at the edge.
+The starter doesn't require the use of any backends. Once deployed, you will have a Fastly service running on Compute@ that can generate synthetic responses at the edge.
 
 ## Security issues
 
@@ -25,9 +24,9 @@ Please see [SECURITY.md](SECURITY.md) for guidance on reporting security-related
 =======
 # compute-kv-demo
 
-This sample code demonstrates how to interact with Fastly's experimental Object Store and LocalKV Store features using the [Rust SDK](https://docs.rs/fastly/0.8.6/fastly/?search=) and a [Helper Crate](https://docs.rs/fastly-kv-preview/latest/fastly_kv_preview/index.html).
+This sample code demonstrates how to interact with Fastly's KV Store feature using the [Rust SDK](https://docs.rs/fastly/latest/fastly/).
 
-Usage: copy and deploy as a Fastly Compute@Edge service. If you don't have a Fastly account, create one first.
+Usage: copy and deploy as a Fastly Compute service. If you don't have a Fastly account, create one first.
 
 These features need to be enabled if you want to test them. Contact support for help.
 
