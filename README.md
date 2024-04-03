@@ -2,7 +2,7 @@
 
 [![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/deploy)
 
-Try out new state features for the Fastly Compute@Edge environment with this basic starter that demonstrates routing, as well as reading and writing KV Store data.
+Try out data stores for the Fastly Compute platform with this basic starter that demonstrates routing, as well as reading and writing KV Store data.
 
 **For more details about starter kits for Compute, see the [Fastly Developer Hub](https://developer.fastly.com/solutions/starters/)**.
 
