@@ -1,19 +1,19 @@
-//use std::convert::TryInto;
-//use std::time::Duration;
-
 use fastly::http::{Method, StatusCode};
+use fastly::kv_store::{KVStoreError, LookupResponse};
 use fastly::{
     mime,
     panic_with_status,
     KVStore,
     Body, Request, Response, Error};
 
-//use fastly::cache::simple::{get_or_set_with, CacheEntry};
-//use fastly::kv_store;
-use sha2::{Digest, Sha256};
-
 #[fastly::main]
 fn main(mut req: Request) -> Result<Response, Error> {
+    // Log out which version of the Fastly Service is responding to this request.
+    // This is useful to know when debugging.
+    if let Ok(fastly_service_version) = std::env::var("FASTLY_SERVICE_VERSION") {
+        println!("FASTLY_SERVICE_VERSION: {}", fastly_service_version);
+    }
+
     //KV store name must be defined in advance via API
     let kv_store_name = "demo_kv_store";
     
@@ -72,7 +72,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
                     eprintln!("Fastly host: {}", cache_server_host);
                     eprintln!("Opening KV Store {}", kv_store_name);
                     // open a KV store
-                    let mut kv_store = match KVStore::open(kv_store_name).unwrap_or_else(|_| {
+                    let kv_store = match KVStore::open(kv_store_name).unwrap_or_else(|_| {
                         panic_with_status!(501, "kv_store API error");
                     }) {                        
                         Some(store) => store,
@@ -80,13 +80,12 @@ fn main(mut req: Request) -> Result<Response, Error> {
                         None => panic_with_status!(501, "Store {} not found!", kv_store_name),
                         //None => Ok(Response::with_body_text_plain("Configured KV Store {} not found", kv_store_name))
                     };
-                    //let mut kv_store = KVStore::open("demo_kv_store")?.unwrap();
                     let key = caps.name("key").unwrap().as_str().to_owned();
                     eprintln!("Key: {}", key);
                     match req.get_method() {
-                        &Method::GET => match kv_store.lookup(&key)? {
-                            Some(value) => Ok(Response::from_body(value).with_content_type(mime::TEXT_PLAIN_UTF_8)),
-                            None => Ok(Response::from_status(StatusCode::NOT_FOUND)),
+                        &Method::GET => match kv_store.lookup(&key) {
+                            Ok(mut value) => Ok(Response::from_body(value.take_body()).with_content_type(mime::TEXT_PLAIN_UTF_8)),
+                            Err(_e) => Ok(Response::from_status(StatusCode::NOT_FOUND)),
                         },
                         &Method::POST => {
                             kv_store.insert(&key, req.take_body())?;
